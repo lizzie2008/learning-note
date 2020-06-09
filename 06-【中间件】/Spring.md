@@ -406,6 +406,119 @@ public void setMusic(Music music) {
 
 # AOP动态代理
 
+## 动态代理的两种方式
+
+一般而言，动态代理分为两种，一种是JDK反射机制提供的代理，另一种是CGLIB代理。在JDK代理，必须提供接口，而CGLIB则不需要提供接口。
+
+- JDK原生动态代理是Java原生支持的，不需要任何外部依赖,但是它只能基于接口进行代理;
+- CGLIB通过继承的方式进行代理，无论目标对象有没有实现接口都可以代理,但是无法处理final的情况。
+
+**spring两种代理方式**
+
+1. 若目标对象实现了若干接口，spring使用JDK的java.lang.reflect.Proxy类代理。 
+优点：因为有接口，所以使系统更加松耦合 
+缺点：为每一个目标类创建接口
+
+2. 若目标对象没有实现任何接口，spring使用CGLIB库生成目标对象的子类。 
+优点：因为代理类与目标类是继承关系，所以不需要有接口的存在。 
+缺点：因为没有使用接口，所以系统的耦合性没有使用JDK的动态代理好
+
+**1.JDK动态代理：**
+
+```java
+public interface Rent {
+    public void rent();
+}
+```
+
+```java
+public class Landlord implements Rent{
+
+    @Override
+    public void rent() {
+        System.out.println("房东要出租房子了！");
+    }
+}
+```
+
+```java
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+
+public class Intermediary implements InvocationHandler{
+    
+    private Object post;
+    
+    Intermediary(Object post){
+        this.post = post;
+    }
+    @Override
+    public Object invoke(Object proxy, Method method, Object[] args)
+            throws Throwable {
+        Object invoke = method.invoke(post, args);
+        System.out.println("中介：该房源已发布！");
+        return invoke;
+    }
+}
+```
+
+```java
+import java.lang.reflect.Proxy;
+
+public class Test {
+    public static void main(String[] args) {
+        Rent rent = new Landlord();
+        Intermediary intermediary = new Intermediary(rent);
+        Rent rentProxy = (Rent) Proxy.newProxyInstance(rent.getClass().getClassLoader(), rent.getClass().getInterfaces(), intermediary);
+        rentProxy.rent();
+    }
+}
+```
+
+**2.CGLIB动态代理：**
+
+```java
+public class Landlord {
+    public void rent(){
+        System.out.println("房东要出租房子了！");
+    }
+}
+```
+
+```java
+import java.lang.reflect.Method;
+
+import net.sf.cglib.proxy.MethodInterceptor;
+import net.sf.cglib.proxy.MethodProxy;
+
+public class Intermediary implements MethodInterceptor {
+
+    @Override
+    public Object intercept(Object object, Method method, Object[] args,MethodProxy methodProxy) throws Throwable {
+        Object intercept = methodProxy.invokeSuper(object, args);
+        System.out.println("中介：该房源已发布！");
+        return intercept;
+    }
+}
+```
+
+```java
+import net.sf.cglib.proxy.Enhancer;
+
+public class Test {
+    public static void main(String[] args) {
+        Intermediary intermediary = new Intermediary();
+        
+        Enhancer enhancer = new Enhancer();  
+        enhancer.setSuperclass(Landlord.class);
+        enhancer.setCallback(intermediary);
+        
+        Landlord rentProxy = (Landlord) enhancer.create();
+        rentProxy.rent();
+    }
+}
+```
+
 ## AOP编程
 
 AOP【面向切面编程】：指在程序运行期间动态的将某段代码切入到指定方法指定位置进行运行的编程方式；

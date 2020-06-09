@@ -354,7 +354,7 @@ JMM有以下规定:
   - volatile只能作用于属性,我们用volatile修饰属性，这样compilers就不会对这个属性做指令重排序
   - volatile提供了可见性，任何一个线程对其的修改将立马对其他线程可见。volatile 属性不会被线程缓存，始终从主存中读取
   - volatile 提供了 happens-before 保证,对volatile变量 v 的写入happens-before 所有其他线程后续对 v 的读操作
-  - volatile可以使得long和double的赋值是原子性
+  - volatile可以使得long和double的赋值是原子性 
 
 ## 能保证可见性的措施
 

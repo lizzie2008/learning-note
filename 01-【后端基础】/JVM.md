@@ -733,7 +733,7 @@ Serial / Serial Old收集器工作过程图（Serial收集器图示相同）：
 
 **Parallel Scavenge/Parallel Old收集器工作过程图：**
 
-![image-20200509104320257](C:\Users\lancelot\AppData\Roaming\Typora\typora-user-images\image-20200509104320257.png) 
+![image-20200509104320257](https://typora-lancelot.oss-cn-beijing.aliyuncs.com/typora/20200604110002-156140.png) 
 
 ### CMS收集器
 
@@ -757,7 +757,7 @@ Serial / Serial Old收集器工作过程图（Serial收集器图示相同）：
 
  CMS收集器的工作过程图：
 
-![image-20200509104343649](C:\Users\lancelot\AppData\Roaming\Typora\typora-user-images\image-20200509104343649.png) 
+![image-20200509104343649](https://typora-lancelot.oss-cn-beijing.aliyuncs.com/typora/20200604105956-90142.png) 
 
 CMS收集器的缺点：
 
