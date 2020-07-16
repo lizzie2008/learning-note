@@ -2140,3 +2140,71 @@ public interface BeanPostProcessor {
 6. DisposableBean的destroy方法
 7. @Bean注解的destroyMethod方法
 
+# Bean 的完整生命周期
+
+在传统的Java应用中，bean的生命周期很简单，使用Java关键字 new 进行Bean 的实例化，然后该Bean 就能够使用了。一旦bean不再被使用，则由Java自动进行垃圾回收。
+
+相比之下，Spring管理Bean的生命周期就复杂多了，正确理解Bean 的生命周期非常重要，因为Spring对Bean的管理可扩展性非常强，下面展示了一个Bean的构造过程
+
+![image-20200611162802844](https://typora-lancelot.oss-cn-beijing.aliyuncs.com/typora/20200611162809-932326.png)  
+
+**Bean 的生命周期**
+
+如上图所示，Bean 的生命周期还是比较复杂的，下面来对上图每一个步骤做文字描述:
+
+1. Spring启动，查找并加载需要被Spring管理的bean，进行Bean的实例化
+2. Bean实例化后对将Bean的引入和值注入到Bean的属性中
+3. 如果Bean实现了BeanNameAware接口的话，Spring将Bean的Id传递给setBeanName()方法
+4. 如果Bean实现了BeanFactoryAware接口的话，Spring将调用setBeanFactory()方法，将BeanFactory容器实例传入
+5. 如果Bean实现了ApplicationContextAware接口的话，Spring将调用Bean的setApplicationContext()方法，将bean所在应用上下文引用传入进来。
+6. 如果Bean实现了BeanPostProcessor接口，Spring就将调用他们的postProcessBeforeInitialization()方法。
+7. 如果Bean 实现了InitializingBean接口，Spring将调用他们的afterPropertiesSet()方法。类似的，如果bean使用init-method声明了初始化方法，该方法也会被调用
+8. 如果Bean 实现了BeanPostProcessor接口，Spring就将调用他们的postProcessAfterInitialization()方法。
+9. 此时，Bean已经准备就绪，可以被应用程序使用了。他们将一直驻留在应用上下文中，直到应用上下文被销毁。
+10. 如果bean实现了DisposableBean接口，Spring将调用它的destory()接口方法，同样，如果bean使用了destory-method 声明销毁方法，该方法也会被调用。
+
+# Spring引用循环依赖
+
+> 如果多个bean存在循环依赖，在Spring容器启动后，**只有当获取的第一个bean是通过属性注入依赖的singleton时，才会成功，别的情况都会失败。**
+
+循环引用的bean之间必然会构成一个环，如下图所示，A、B、C之间构成了一个环形。
+
+![image-20200611161929660](https://typora-lancelot.oss-cn-beijing.aliyuncs.com/typora/20200611161933-950089.png) 
+
+当Spring容器在创建A时，会发现其引用了B，从而会先去创建B。同样的，创建B时，会先去创建C，而创建C时，又先去创建A。最后A、B、C之间互相等待，谁都没法创建成功。
+
+要想打破这个环，这个环中至少需要有一个bean可以在自身的依赖还没有得到满足前，就被创建出来（最起码要被实例化出来，可以先不注入其需要的依赖）。这种bean只能是通过属性注入依赖的类，因为它们可以先使用默认构造器创建出实例，然后再通过setter方法注入依赖。而通过构造器注入依赖的类，在它的依赖没有被满足前，无法被实例化。而且这个bean，还必须是singleton，不能是prototype。
+
+例如：
+
+```xml
+<bean id="singletonA" class="ccc.spring.circulardependencies.field.A" lazy-init="true">
+    <property name="b" ref="singletonB"/>
+</bean>
+<bean id="singletonB" class="ccc.spring.circulardependencies.field.B" lazy-init="true">
+    <property name="a" ref="singletonA"/>
+</bean>
+```
+
+Spring容器启动后，如果去获取singletonA，那么容器的操作步骤大致如下：
+
+1.尝试创建bean singletonA，发现singletonA是singleton，且不是通过构造器注入依赖，那么先使用默认构造器创建一个A的实例，并保存对它的引用，并且将singletonA标记为“正在创建中的singleton”。然后发现singletonA依赖了singletonB，所以尝试创建singletonB。
+ 
+2.尝试创建bean singletonB，发现singletonB是singleton，且不是通过构造器注入依赖，那么先使用默认构造器创建一个B的实例，并保存对它的引用，并且将singletonB标记为“正在创建中的singleton”。然后发现singletonB依赖了singletonA，所以尝试创建singletonA。
+ 
+3.尝试创建singletonA，注意，这时Spring容器发现singletonA“正在创建中”，那么就不会再去创建singletonA，而是返回容器之前保存了的对singletonA的引用。
+ 
+4.容器将singletonA通过setter方法注入到singletonB，从而singletonB完成创建。
+ 
+5.容器将singletonB通过setter方法注入到singletonA，从而singletonA完成创建。
+
+在第1步中，容器会保存对singletonA的引用，在第3步中，再返回对singletonA的引用，从而可以成功创建那些依赖了singletonA的bean（singletonB）。这样，循环依赖的环就在singletonA这个点这里被打破。
+
+为什么prototype不能成为打破这个环的一个点呢？
+
+Spring容器只会对singleton保存引用，而对于prototype，并不会对其保存引用。（如果也对prototype保存引用，那么其实它就变成了singleton。）
+
+在循环依赖的环里，只要有一个bean，是通过属性注入依赖，并且是singleton，那么这个环就可以被打破，无论获取他们的顺序是怎样。
+因为当Spring容器遍历那些循环依赖的bean时，只要遍历到那种已经遍历过一次的bean，并且它们不是通过属性注入依赖的singleton时，就会直接抛出BeanCurrentlyInCreationException异常。
+
+# 
