@@ -324,6 +324,57 @@ long count = persons.stream()
 
 这只是 `stream` 的很简单的一个用法。现在链式调用方法算是一个主流，这样写也更利于阅读和理解编写者的意图，一步方法做一件事。
 
+### Predicate
+
+除了在语言层面支持函数式编程风格，Java 8也添加了一个包，叫做 java.util.function。它包含了很多类，用来支持Java的函数式编程。其中一个便是Predicate，使用 java.util.function.Predicate 函数式接口以及lambda表达式，可以向API方法添加逻辑，用更少的代码支持更多的动态行为。Predicate接口非常适用于做过滤。
+
+```java
+public static void filterTest(List<String> languages, Predicate<String> condition) {
+    languages.stream().filter(x -> condition.test(x)).forEach(x -> System.out.println(x + " "));
+}
+
+public static void main(String[] args) {
+    List<String> languages = Arrays.asList("Java","Python","scala","Shell","R");
+    System.out.println("Language starts with J: ");
+    filterTest(languages,x -> x.startsWith("J"));
+    System.out.println("\nLanguage ends with a: ");
+    filterTest(languages,x -> x.endsWith("a"));
+    System.out.println("\nAll languages: ");
+    filterTest(languages,x -> true);
+    System.out.println("\nNo languages: ");
+    filterTest(languages,x -> false);
+    System.out.println("\nLanguage length bigger three: ");
+    filterTest(languages,x -> x.length() > 4);
+}
+```
+
+最后的输出结果：
+
+```bash
+Language starts with J: 
+Java 
+
+Language ends with a: 
+Java 
+scala 
+
+All languages: 
+Java 
+Python 
+scala 
+Shell 
+R 
+
+No languages: 
+
+Language length bigger three: 
+Python 
+scala 
+Shell 
+```
+
+可以看到，Stream API的过滤方法也接受一个Predicate，这意味着可以将我们定制的 filter() 方法替换成写在里面的内联代码，这也是lambda表达式的魔力！
+
 ### Stream 常用操作
 
 `Stream` 的方法分为两类。一类叫惰性求值，一类叫及早求值。
