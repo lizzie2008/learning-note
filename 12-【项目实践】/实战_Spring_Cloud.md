@@ -58,6 +58,10 @@
 
 # 服务注册中心（[Eureka](https://cloud.spring.io/spring-cloud-netflix/reference/html/)）
 
+## 注册中心的选型
+
+![image-20210420141023616](https://typora-lancelot.oss-cn-beijing.aliyuncs.com/typora/20210420141024-952825.png) 
+
 ## Eureka Server
 
 - 新建Module->选择Eureka Server
@@ -2068,3 +2072,5 @@ networks:
   eureka-net:
     driver: bridge
 ```
+
+![image-20210331171840572](https://typora-lancelot.oss-cn-beijing.aliyuncs.com/typora/20210331171841-90832.png)  

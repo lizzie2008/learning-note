@@ -1,4 +1,5 @@
-# Maven简介
+> # Maven简介
+>
 
 Maven是Apache软件基金会唯一维护的一款自动化构建工具，专注于服务Java平台的项目构建和依赖管理。
 
@@ -472,3 +473,22 @@ maven可以让我们方便地管理jar包依赖，具体做法如下：
 </dependency>
 ```
 
+# 部署jar包服务
+
+```shell
+nohup java -server -Xms256m -Xmx256m -jar -Dserver.port=9090 -Dspring.profiles.active=dev sentinel-dashboard.jar > Log.log 2>&1 &
+```
+参数：
+> nohup ： 不挂断运行命令（以守护进程形式运行）
+>
+> -server ： 使用server模式，特点是启动速度比较慢，但运行时性能和内存管理效率很高
+>
+> -Xms -Xmx ： 指定堆空间初始和最大大小
+>
+> -Dserver.port ： 指定端口
+>
+> -Dspring.profiles.active：指定环境，启动时会动态替换配置项spring.profiles.active的值
+>
+> &  ： 进程在后台运行
+>
+> \>Log.log  ： 指定日志输出的文件
